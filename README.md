@@ -1,1 +1,249 @@
 # ModeloPredictivoHabitosEstudiantiles
+---
+title: "Modelo Predictivo de hábitos estudiantiles y rendimiento académico"
+format: pdf
+editor: visual
+---
+
+# Modelo Predictivo de hábitos estudiantiles y rendimiento académico
+
+## Descripción general del dataset
+
+El dataset contiene **1000 registros de estudiantes**, cada uno con información sobre hábitos diarios, condiciones personales y rendimiento académico. En total, hay **16 variables**, tanto numéricas como categóricas. Estas variables incluyen aspectos como edad, género, horas de estudio, uso de redes sociales, calidad del sueño, ejercicio, salud mental y nota obtenida en el examen final.
+
+## Objetivos
+
+### General
+
+Desarrollar un modelo predictivo capaz de estimar el rendimiento académico de los estudiantes, medido a través de la nota del examen final, en función de sus hábitos de estudio, estilo de vida y condiciones personales.
+
+### Especificos
+
+-   Explorar y analizar los datos disponibles sobre hábitos estudiantiles, bienestar y rendimiento académico.
+
+-   Identificar las variables que tienen mayor correlación con el puntaje en el examen, como horas de estudio, sueño, uso de redes sociales, entre otras.
+
+-   Preprocesar los datos para su uso en modelos predictivos (tratamiento de valores nulos, codificación de variables categóricas, normalización, etc.).λ
+
+-   Interpretar los resultados del modelo para comprender la importancia relativa de cada hábito o variable en la predicción del rendimiento académico.
+
+-   ¿Que función propongo? Una función que tome un dataframe, realice una imputacion, saque valores extremos, codificar a numeros ("encoder") y dejar en la clase que requiere el ML.
+
+-   Pensar para el examen la función que da la predección final.
+
+## Importar dataset
+
+```{r}
+
+rendimiento_estudiantes_inmutable=read.csv("student_habits_performance.csv")
+```
+
+### Cargar librerias
+
+```{r}
+#Librerias
+library(tidyverse)
+library(tidymodels)
+```
+
+## Visualización del dataset
+
+### Primeras 6 filas del dataset
+
+```{r}
+head(rendimiento_estudiantes_inmutable,5)
+```
+
+### Variables del dataset
+
+Variables numéricas continuas:
+
+-   age – Edad del estudiante
+
+-   study_hours_per_day – Horas de estudio por día
+
+-   social_media_hours – Horas en redes sociales por día
+
+-   netflix_hours – Horas viendo Netflix por día
+
+-   attendance_percentage – Porcentaje de asistencia a clases
+
+-   sleep_hours – Horas de sueño por día
+
+-   exercise_frequency – Frecuencia de ejercicio (veces por semana)
+
+-   mental_health_rating – Valoración del bienestar mental (escala 1 a 10)
+
+-   exam_score – Puntaje en el examen final (0 a 100)
+
+Variables categóricas:
+
+-   student_id – ID único del estudiante (no se analiza, sirve para identificación)
+
+-   gender – Género (Male, Female, Other)
+
+-   part_time_job – Tiene trabajo de medio tiempo (Yes/No)
+
+-   diet_quality – Calidad de la dieta (Poor, Fair, Good)
+
+-   parental_education_level – Nivel educativo de los padres (por ejemplo: High School, Bachelor, etc.)
+
+-   internet_quality – Calidad del internet (Poor, Average, Good)
+
+-   extracurricular_participation – Participación en actividades extracurriculares (Yes/No)
+
+## Analisis exploratorio de datos
+
+```{r}
+summary(rendimiento_estudiantes_inmutable)
+str(rendimiento_estudiantes_inmutable)
+```
+
+```{r}
+
+# 1. Preparación de Datos (funcional e inmutables)
+#Funcion para preparar datos para el modelo
+
+preparacion_data <- function(data){
+    data %>% 
+    select(-student_id) %>% 
+    mutate(gender = factor(gender),
+           part_time_job = factor(part_time_job),
+           diet_quality = factor(diet_quality),
+           parental_education_level = factor(parental_education_level),
+           internet_quality = factor(internet_quality),
+           extracurricular_participation = factor(extracurricular_participation),
+           gender = as.numeric(gender),
+           part_time_job = as.numeric(part_time_job),
+           diet_quality = as.numeric(diet_quality),
+           parental_education_level = as.numeric(parental_education_level),
+           internet_quality = as.numeric(internet_quality),
+           extracurricular_participation = as.numeric(extracurricular_participation),
+           )
+}
+```
+
+```{r}
+# Funcion para calcular los coeficientes de correlacions de la variable 
+# dependiente con respecto a las variables independientes
+
+coeficientes_correlacion <- function(data, metodo = "pearson"){
+  if(!metodo %in% c("kendall", "pearson", "spearman") ){
+    cat("Metodo no es el correcto, debe escoger entre 'kendall', 'spearman' o 'pearson' ")
+    
+  }else{
+        i <- 1
+        nombre_columnas <- names(data)
+        columnas_qty <- ncol(data)
+        Puntaje_examen <- data[,columnas_qty]
+        columnas_p_value <- character(0)
+        value_p <- c()
+        correlacion <- c()
+        while (i<columnas_qty){
+          columna_sel <- data[,i]
+          c1 <- cor.test(columna_sel,Puntaje_examen)
+          corre_value <- cor(columna_sel,Puntaje_examen,method = metodo)
+          p <-c1$p.value
+          
+            if(p<0.05){
+              columnas_p_value <- append(columnas_p_value,nombre_columnas[i])
+              value_p <- append(value_p, p)
+             correlacion <- append(correlacion, corre_value)
+              }
+          i <- i+1
+          }
+        
+      
+      datanew <- data %>% 
+        select(columnas_p_value,nombre_columnas[[columnas_qty]])
+        
+      cor_y_p_value <- list(
+          columnas_p_value_signi = columnas_p_value,
+          valor_p = value_p,
+          correlación = correlacion,
+          metodo = metodo,
+          col_qty = length(columnas_p_value),
+          data_modelo = datanew
+        )
+        class(cor_y_p_value) <- "coeficientes"
+        
+        return(cor_y_p_value)
+      }
+  }
+
+```
+
+```{r}
+#Con esta función se da formato al imprimir el resultado de la clase coeficientes
+
+print.coeficientes <- function(x, ...) {
+  i <- 1 
+  cat("--- Resultado del calculo de las correlaciones con el Metodo:", x$metodo ," --- \n \n")
+   while (i <= x$col_qty) {
+     cat("La correlación entre",x$columnas_p_value_signi[[i]],"y exam_score es:", round((x$correlación[[i]])*100, digits = 2) , "% \n")
+     i <- i+1
+   }
+  cat("\n--- Todas con un p-value < 0.05 ---")
+   
+  
+}
+```
+
+```{r}
+# Se preparan los datos utilizando la funcion 'preparacion_data' y se guardan en 'rendimiento_estudiantes_preparado'
+rendimiento_estudiantes_preparado <- preparacion_data(rendimiento_estudiantes_inmutable)
+```
+
+```{r}
+# Se utilizan los datos preparados en la funcion 'coeficientes_correlacion' y se imprimen los resultados
+corpearson <- coeficientes_correlacion(rendimiento_estudiantes_preparado,metodo = "pearson")
+print(corpearson)
+```
+
+```{r}
+data_modelo <- corpearson$data_modelo
+head(data_modelo)
+str(data_modelo)
+```
+
+```{r}
+# 2. Especificacion del modelo (Funcional)
+especificacion_modelo <- linear_reg() %>% 
+  set_engine("lm")
+```
+
+```{r}
+# 3. Ajuste del Modelo
+ajuste_modelo <- especificacion_modelo %>% 
+  fit(exam_score ~ study_hours_per_day + social_media_hours + netflix_hours  + attendance_percentage + sleep_hours  + exercise_frequency   + mental_health_rating  , data = rendimiento_estudiantes_preparado)
+
+
+
+```
+
+```{r}
+#Se visualiza el resumen del modelo generado
+resumen_modelo <- ajuste_modelo %>% 
+  pluck("fit") %>% 
+  anova() %>% 
+  tidy()
+print(resumen_modelo)
+
+```
+
+```{r}
+# se realizan test de la funcion creada con el metodo spearman
+corspearman <- coeficientes_correlacion(rendimiento_estudiantes_preparado,metodo = "spearman")
+print(corspearman)
+```
+
+```{r}
+# se realizan test de la funcion creada con el metodo kendall
+corkendall <- coeficientes_correlacion(rendimiento_estudiantes_preparado,metodo = "kendall")
+print(corkendall)
+```
+
+```{r}
+# se realizan test de la funcion creada con el metodo lala
+cor1 <- coeficientes_correlacion(rendimiento_estudiantes_preparado,metodo = "lala")
+```
