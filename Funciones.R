@@ -56,11 +56,11 @@ coeficientes_correlacion <- function(data, metodo = "pearson"){
     
     
     cor_y_p_value <- list(
-      columnas_p_value_signi = columnas_p_value,
+      variables_predictoras = columnas_p_value,
       valor_p = value_p,
       correlación = correlacion,
       metodo = metodo,
-      col_qty = length(columnas_p_value),
+      cantidad_columnas = length(columnas_p_value),
       data_modelo = datanew
     )
     class(cor_y_p_value) <- "coeficientes"
@@ -74,7 +74,7 @@ coeficientes_correlacion <- function(data, metodo = "pearson"){
 
 print.coeficientes <- function(x, ...) {
   qty_col <- length(x$data_modelo)
-  col_p <- x$columnas_p_value_signi
+  col_p <- x$variables_predictoras
   i <- 1 
   cat("--- Resultado del calculo de las correlaciones con el Metodo:", x$metodo ," --- ")
   while (i < qty_col) {
@@ -85,6 +85,35 @@ print.coeficientes <- function(x, ...) {
     
     
     
+  }
+  
+  
+  analiza_habitos_estudio <- function(data, variable_objetivo = "exam_score", variables_predictoras = c("study_hours_per_day", "sleep_hours"), modelo = "lm", resumen = TRUE) {
+    # Validaciones
+    if (!is.data.frame(data)) stop("El objeto ingresado no es un data.frame")
+    if (!all(c(variable_objetivo, variables_predictoras) %in% colnames(data))) stop("Variables no encontradas en el dataset")
+    
+    # Eliminar filas incompletas
+    data <- data %>% drop_na(all_of(c(variable_objetivo, variables_predictoras)))
+    
+    # Formula dinámica
+    formula_str <- paste(variable_objetivo, "~", paste(variables_predictoras, collapse = " + "))
+    fmla <- as.formula(formula_str)
+    
+    # Selección de modelo
+    if (modelo == "lm") {
+      fit <- lm(fmla, data = data)
+    } else if (modelo == "glm") {
+      fit <- glm(fmla, data = data)
+    } else {
+      stop("Modelo no soportado. Usa 'lm' o 'glm'.")
+    }
+    
+    if (resumen) {
+      return(summary(fit))
+    } else {
+      return(fit)
+    }
   }
   
   
