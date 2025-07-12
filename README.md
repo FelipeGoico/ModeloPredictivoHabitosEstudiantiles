@@ -6,7 +6,7 @@ Este repositorio contiene el desarrollo del examen final del curso **Programaci�
 
 - `ModeloPredictivoHabitosEstudiantiles`: Informe Quarto con todo el desarrollo, explicación, código y resultados.
 - `student_habits_performance.csv`: Dataset utilizado, con registros de hábitos y notas de estudiantes.
-- `Funciones.R`: Código fuente de la función `analiza_habitos_estudio()`.
+- `Funciones.R`: Código fuente de las funciónes `analiza_habitos_estudio()`, `preparacion_data()` y `coeficientes_correlacion()`.
 - `video_explicativo.mp4`: Video explicando el trabajo.
 
 ## Descripción del problema
