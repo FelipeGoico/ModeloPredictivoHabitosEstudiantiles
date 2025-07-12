@@ -16,7 +16,7 @@ El dataset contiene **1000 registros de estudiantes**, cada uno con información
 
 ### General
 
-Desarrollar un modelo predictivo capaz de estimar el rendimiento académico de los estudiantes, medido a través de la nota del examen final, en función de sus hábitos de estudio, estilo de vida y condiciones personales.
+Desarrollar función que genere modelo de regresión lineal o generalizada capaz de estimar el rendimiento académico de los estudiantes, medido a través de la nota del examen final, en función de sus hábitos de estudio, estilo de vida y condiciones personales.
 
 ### Especificos
 
@@ -28,9 +28,7 @@ Desarrollar un modelo predictivo capaz de estimar el rendimiento académico de l
 
 -   Interpretar los resultados del modelo para comprender la importancia relativa de cada hábito o variable en la predicción del rendimiento académico.
 
--   ¿Que función propongo? Una función que tome un dataframe, realice una imputacion, saque valores extremos, codificar a numeros ("encoder") y dejar en la clase que requiere el ML.
-
--   Pensar para el examen la función que da la predección final.
+-   Desarrollar pruebas de la función creada con testhat
 
 \newpage
 
@@ -40,16 +38,13 @@ Desarrollar un modelo predictivo capaz de estimar el rendimiento académico de l
 rendimiento_estudiantes_inmutable=read.csv("student_habits_performance.csv")
 ```
 
-### Cargar librerias
-
-```{r}
+```{r , include=FALSE}
 #Librerias
 library(tidyverse)
 library(tidymodels)
 library(GGally)
+library(testthat)
 ```
-
-\newpage
 
 ## Visualización del dataset
 
@@ -112,66 +107,134 @@ str(rendimiento_estudiantes_inmutable)
 
 ## Uso de funciones creadas
 
+Se preparan los datos utilizando la funcion 'preparacion_data' y se guardan en 'rendimiento_estudiantes_preparado'
+
 ```{r}
-# Se preparan los datos utilizando la funcion 'preparacion_data' y se guardan en 'rendimiento_estudiantes_preparado'
-source("Funciones.R")
+
+source("Funciones.R") #carga de funciones
 rendimiento_estudiantes_preparado <- preparacion_data(rendimiento_estudiantes_inmutable)
 head(rendimiento_estudiantes_preparado)
 ```
 
 \newpage
 
+Se utilizan los datos preparados en la funcion 'coeficientes_correlacion' y se imprimen los resultados
+
 ```{r}
-# Se utilizan los datos preparados en la funcion 'coeficientes_correlacion' y se imprimen los resultados
-corpearson <- coeficientes_correlacion(rendimiento_estudiantes_preparado,metodo = "pearson")
+corpearson <- coeficientes_correlacion(rendimiento_estudiantes_preparado,
+                                       metodo = "pearson")
 print(corpearson)
 ```
 
 \newpage
 
+Visualización dataset para el modelo.
+
 ```{r}
+# Se extrae y se visualiza los datos para el modelo. 
 data_modelo <- corpearson$data_modelo
 head(data_modelo)
 ```
 
-```{r}
-# 2. Especificacion del modelo (Funcional)
-especificacion_modelo <- linear_reg() %>% 
-  set_engine("lm")
-```
+## Desarrollo de la función
 
 ```{r}
-# 3. Ajuste del Modelo
-ajuste_modelo <- especificacion_modelo %>% 
-  fit(exam_score ~ study_hours_per_day + social_media_hours + netflix_hours  + attendance_percentage + sleep_hours  + exercise_frequency   + mental_health_rating  , data = rendimiento_estudiantes_preparado)
+analiza_habitos_estudio <- function(data, 
+                                    variable_objetivo = "exam_score", 
+                                    variables_predictoras = c("study_hours_per_day",
+                                                              "sleep_hours"), 
+                                    modelo = "lm", 
+                                    resumen = TRUE) {
+  # Validaciones
+  if (!is.data.frame(data)) 
+    stop("El objeto ingresado no es un data.frame")
+  if (!all(c(variable_objetivo, variables_predictoras) %in% colnames(data))) 
+    stop("Variables no encontradas en el dataset")
 
+  # Eliminar filas incompletas
+  data <- data %>% drop_na(all_of(c(variable_objetivo, 
+                                    variables_predictoras)))
 
+  # Formula dinámica
+  formula_str <- paste(variable_objetivo, 
+                       "~", 
+                       paste(variables_predictoras, 
+                             collapse = " + "))
+  fmla <- as.formula(formula_str)
 
+  # Selección de modelo
+  if (modelo == "lm") {
+    fit <- lm(fmla, data = data)
+  } else if (modelo == "glm") {
+    fit <- glm(fmla, data = data)
+  } else {
+    stop("Modelo no soportado. Usa 'lm' o 'glm'.")
+  }
+
+  if (resumen) {
+    return(summary(fit))
+  } else {
+    return(fit)
+  }
+}
 ```
+
+## Aplicación de la función
+
+### variables predictoras
 
 ```{r}
-#Se visualiza el resumen del modelo generado
-resumen_modelo <- ajuste_modelo %>% 
-  pluck("fit") %>% 
-  anova() %>% 
-  tidy()
-print(resumen_modelo)
-
+variables_predictoras <- corpearson$variables_predictoras
 ```
+
+### Modelo con variables predictoras de data_modelo
 
 ```{r}
-# se realizan test de la funcion creada con el metodo spearman
-corspearman <- coeficientes_correlacion(rendimiento_estudiantes_preparado,metodo = "spearman")
-print(corspearman)
+# Modelo con variables predictoras de data_modelo
+analiza_habitos_estudio(data_modelo, 
+                        variables_predictoras = variables_predictoras, 
+                        resumen = T)
 ```
 
-```{r}
-# se realizan test de la funcion creada con el metodo kendall
-corkendall <- coeficientes_correlacion(rendimiento_estudiantes_preparado,metodo = "kendall")
-print(corkendall)
-```
+### Modelo con 2 variables predictoras (study_hours_per_day & sleep_hours)
 
 ```{r}
-# se realizan test de la funcion creada con el metodo lala
-cor1 <- coeficientes_correlacion(rendimiento_estudiantes_preparado,metodo = "lala")
+# Modelo con dos variables predictoras
+analiza_habitos_estudio(data_modelo, 
+                        variables_predictoras = c("study_hours_per_day", 
+                                                  "sleep_hours"), 
+                        resumen = T)
 ```
+
+## Validación con testthat
+
+```{r}
+
+
+test_that("El input debe ser un data.frame", {
+  expect_error(analiza_habitos_estudio("texto"))
+})
+
+test_that("Devuelve un modelo lm", {
+  df <- data_modelo %>% select(exam_score, 
+                               study_hours_per_day, 
+                               sleep_hours) %>% drop_na()
+  fit <- analiza_habitos_estudio(df, 
+                                 resumen = FALSE)
+  expect_s3_class(fit, "lm")
+})
+
+test_that("Lanza error si las variables no existen", {
+  expect_error(analiza_habitos_estudio(df_test, 
+                                       variables_predictoras = c("inexistente")))
+})
+
+test_that("Funciona correctamente con resumen", {
+  resultado <- analiza_habitos_estudio(data_modelo)
+  expect_type(resultado, "list")
+})
+```
+
+## Conclusiones
+
+La función desarrollada permite analizar rápidamente el impacto de distintas variables de hábito en el rendimiento académico. Se comprobó que variables como las horas de estudio y el sueño tienen una correlación directa con las calificaciones. La función es escalable, flexible y reutilizable para distintos conjuntos de datos.
