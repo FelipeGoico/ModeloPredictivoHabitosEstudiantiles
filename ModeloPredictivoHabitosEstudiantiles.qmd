@@ -40,10 +40,10 @@ rendimiento_estudiantes_inmutable=read.csv("student_habits_performance.csv")
 
 ```{r , include=FALSE}
 #Librerias
-library(tidyverse)
-library(tidymodels)
-library(GGally)
-library(testthat)
+library(tidyverse) #analisis y manipúlación de datos
+library(tidymodels) #modelado y analisis estadistico
+library(GGally) #visualizaciones complejas
+library(testthat) # pruebas unitarias de codigo
 ```
 
 ## Visualización del dataset
