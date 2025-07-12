@@ -7,7 +7,7 @@ Este repositorio contiene el desarrollo del examen final del curso **Programaci�
 - `ModeloPredictivoHabitosEstudiantiles`: Informe Quarto con todo el desarrollo, explicación, código y resultados.
 - `student_habits_performance.csv`: Dataset utilizado, con registros de hábitos y notas de estudiantes.
 - `Funciones.R`: Código fuente de las funciónes `analiza_habitos_estudio()`, `preparacion_data()` y `coeficientes_correlacion()`.
-- `Examen R.mp4`: Video explicando el trabajo( https://eduudla-my.sharepoint.com/:v:/g/personal/186291875_academicos_uamericas_cl/ERvr5yhSs1lFkVMA4DLSYPMBfWzjsKYGfp9oENDxUscndQ?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=bX1tUa ).
+- `Examen R.mp4`: Video explicando el trabajo( [https://eduudla-my.sharepoint.com/:v:/g/personal/186291875_academicos_uamericas_cl/ERvr5yhSs1lFkVMA4DLSYPMBfWzjsKYGfp9oENDxUscndQ?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=bX1tUa](https://eduudla-my.sharepoint.com/:v:/g/personal/186291875_academicos_uamericas_cl/EbHWkeuVt05BtqMImSszKoQBSVe56behsfx4b0cmP7D4pA?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=fbjaqg) ).
 
 ## Descripción del problema
 
